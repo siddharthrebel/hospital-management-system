@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+import tkinter as tk
 import random
 import time
 import datetime
@@ -9,53 +10,163 @@ import os
 from tkinter import filedialog
 from fpdf import FPDF
 
-import tkinter as tk
-
-import tkinter as tk
-from tkinter import messagebox
-
 import tkinter
 from tkinter import messagebox
 
 
-window = tkinter.Tk()
-window.title("Login form")
-window.geometry('340x440')
-window.configure(bg='#333333')
+from tkinter import *
 
 def login():
-    username = "johnsmith"
-    password = "12345"
-    if username_entry.get()==username and password_entry.get()==password:
-        messagebox.showinfo(title="Login Success", message="You successfully logged in.")
-        new_window=Toplevel()
-        app=Hospital(new_window)
-    else:
-        messagebox.showerror(title="Error", message="Invalid login.")
+    entered_username = username_entry.get()
+    entered_password = password_entry.get()
 
-frame = tkinter.Frame(bg='#333333')
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="#7903664492sid",
+        database="hospital_management_system"
+    )
 
-# Creating widgets
-login_label = tkinter.Label(
-    frame, text="Login", bg='#333333', fg="#FF3399", font=("Arial", 30))
-username_label = tkinter.Label(
-    frame, text="Username", bg='#333333', fg="#FFFFFF", font=("Arial", 16))
-username_entry = tkinter.Entry(frame, font=("Arial", 16))
-password_entry = tkinter.Entry(frame, show="*", font=("Arial", 16))
-password_label = tkinter.Label(
-    frame, text="Password", bg='#333333', fg="#FFFFFF", font=("Arial", 16))
-login_button = tkinter.Button(
-    frame, text="Login", bg="#FF3399", fg="#FFFFFF", font=("Arial", 16), command=login)
+    cursor = conn.cursor()
 
-# Placing widgets on the screen
+    try:
+        # Check if the entered username and password match any record in the database
+        cursor.execute("SELECT * FROM signup WHERE username = %s AND password = %s", (entered_username, entered_password))
+        user_record = cursor.fetchone()
+
+        if user_record:
+            messagebox.showinfo(title="Login Success", message="You successfully logged in.")
+            # Here, you can open a new window or perform any other actions after successful login.
+            # For example, you can create an instance of the Hospital class and pass the new window.
+            new_window = Toplevel()
+            app = Hospital(new_window)
+        else:
+            messagebox.showerror(title="Error", message="Invalid login.")
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        messagebox.showerror("Database Error", "An error occurred while connecting to the database.")
+
+    finally:
+        cursor.close()
+        conn.close()
+
+def signup():
+    global signup_window
+    signup_window = Toplevel(window)
+    signup_window.title("Signup form")
+    signup_window.geometry('500x500')
+
+    # Create widgets for signup window
+    signup_label = Label(signup_window, text="Signup", font=("Arial", 30))
+    signup_label.pack(pady=20)
+
+    global Name_entry_signup
+    Name_label_signup = Label(signup_window, text="Name", font=("Arial", 16))
+    Name_label_signup.pack()
+    Name_entry_signup = Entry(signup_window, font=("Arial", 16))
+    Name_entry_signup.pack(pady=10)
+
+    global Number_entry_signup
+    Number_label_signup = Label(signup_window, text="Number", font=("Arial", 16))
+    Number_label_signup.pack()
+    Number_entry_signup = Entry(signup_window, font=("Arial", 16))
+    Number_entry_signup.pack(pady=10)
+
+    global username_entry_signup
+    username_label_signup = Label(signup_window, text="Username", font=("Arial", 16))
+    username_label_signup.pack()
+    username_entry_signup = Entry(signup_window, font=("Arial", 16))
+    username_entry_signup.pack(pady=10)
+
+    global password_entry_signup
+    password_label_signup = Label(signup_window, text="Password", font=("Arial", 16))
+    password_label_signup.pack()
+    password_entry_signup = Entry(signup_window, show="*", font=("Arial", 16))
+    password_entry_signup.pack(pady=10)
+
+        # Add a signup button to perform signup action
+    signup_button = Button(signup_window, text="Signup", bg="#FF3399", fg="#ffffff", font=("Arial", 16),command=perform_signup)
+
+    signup_button.pack(pady=20)
+
+def perform_signup():
+    Name = Name_entry_signup.get()
+    Number = Number_entry_signup.get()
+    Username = username_entry_signup.get()
+    Password = password_entry_signup.get()
+
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="#7903664492sid",
+        database="hospital_management_system"
+    )
+
+    # Create a cursor object to interact with the database
+    cursor = conn.cursor()
+
+    try:
+        # Check if username already exists in the "signup" table
+        cursor.execute("SELECT * FROM signup WHERE username = %s", (Username,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            messagebox.showerror("Signup Error", "Username already exists. Please choose a different username.")
+        else:
+            # Add the new user to the "signup" table
+            cursor.execute("INSERT INTO signup (name, number, username, password) VALUES (%s, %s, %s, %s)", (Name, Number, Username, Password))
+
+            conn.commit()
+
+            # Display a success message
+            messagebox.showinfo("Signup Success", "You have successfully signed up!")
+
+            # Close the signup window (optional)
+            signup_window.destroy()
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        messagebox.showerror("Database Error", "An error occurred while connecting to the database.")
+
+    finally:
+        # Close the cursor and connection
+        cursor.close()
+        conn.close()
+
+
+
+# Create the main window
+window = Tk()
+window.title("Login form")
+window.geometry('500x500')
+window.configure(bg='#333333')
+
+# Create widgets for the main window
+frame = Frame(bg='#333333')
+
+login_label = Label(frame, text="Login", bg='#333333', fg="#FF3399", font=("Arial", 30))
+username_label = Label(frame, text="Username", bg='#333333', fg="#FFFFFF", font=("Arial", 16))
+username_entry = Entry(frame, font=("Arial", 16))
+password_entry = Entry(frame, show="*", font=("Arial", 16))
+password_label = Label(frame, text="Password", bg='#333333', fg="#FFFFFF", font=("Arial", 16))
+login_button = Button(frame, text="Login", bg="#FF3399", fg="#FFFFFF", font=("Arial", 16), command=login)
+signup_button = Button(frame, text="Signup", bg="#3333FF", fg="#FFFFFF", font=("Arial", 16), command=signup)
+
 login_label.grid(row=0, column=0, columnspan=2, sticky="news", pady=40)
 username_label.grid(row=1, column=0)
 username_entry.grid(row=1, column=1, pady=20)
 password_label.grid(row=2, column=0)
 password_entry.grid(row=2, column=1, pady=20)
-login_button.grid(row=3, column=0, columnspan=2, pady=30)
+login_button.grid(row=3, column=0, columnspan=2, pady=10)
+signup_button.grid(row=4, column=0, columnspan=2, pady=10)
 
 frame.pack()
+
+
+# window.mainloop()
+
+
 
 
 class Hospital:
@@ -457,14 +568,8 @@ class Hospital:
 
 
 
-
-
-
-
-
-
-# root=Tk()
-# ob=Hospital(root)
+ # root=Tk()
+ # ob=Hospital(root)
 window.mainloop()
 
 
